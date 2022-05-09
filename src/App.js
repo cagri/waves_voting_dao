@@ -3,15 +3,13 @@ import { Signer } from '@waves/signer';
 import { ProviderWeb } from '@waves.exchange/provider-web';
 //import { libs } from '@waves/waves-transactions';
 import { ProviderCloud } from '@waves.exchange/provider-cloud';
-import { Navbar,Container,Button, Nav,Image,Row,Modal,Col,Alert,Badge,Form } from 'react-bootstrap';
+import { Navbar,Container,Button, Nav,Image,Row,Modal,Col,Form } from 'react-bootstrap';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const node_address = "https://nodes-testnet.wavesnodes.com";
-const contract = "3MqQhA21mw1UHWmdGMV9M9xQL1cpC93LF8o"
-//const contract = "3N9K49ZpyQLL9gJjVdxQhu37f8YZdAzakR1"
-const paymentAsset = "CgidgEMbCKXXErgJXVyZCFRaK8SBNA73Jg8mNXALtVKh"
-const rewardAsset = "43W4FcqA1rEpSmUGHoGiXvpSLfhadws9LS5j3SJsKxxS"
+const node_address = "https://nodes.wavesnodes.com";
+
+const paymentAsset = "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p"
 
 class App extends Component {
   constructor() {
@@ -152,8 +150,8 @@ class App extends Component {
       const veri = {
         dApp: "3MprJDkh5ytEdUqhn3iKYdFNg2CYoWBV51h",
         payment: [{
-          assetId: "CgidgEMbCKXXErgJXVyZCFRaK8SBNA73Jg8mNXALtVKh",
-          amount: 10000000,
+          assetId: "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p",
+          amount: 5000000,
         }],
         call: {
           function: 'nftMinter',
