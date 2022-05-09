@@ -10,6 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const node_address = "https://nodes.wavesnodes.com";
 
 const paymentAsset = "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p"
+const rewardAsset = "43W4FcqA1rEpSmUGHoGiXvpSLfhadws9LS5j3SJsKxxS"
 
 class App extends Component {
   constructor() {
@@ -128,7 +129,7 @@ class App extends Component {
       return false;
     }
 
-    return (url.match(/^http[^\?]*.(jpg|jpeg|gif|png|tiff|bmp)(\?(.*))?$/gmi) !== null);
+    return (url.match(/^http[^?]*.(jpg|jpeg|gif|png|tiff|bmp)(\?(.*))?$/gmi) !== null);
   }
 
   handleChange = (e) => {
@@ -148,7 +149,7 @@ class App extends Component {
       const a = new Date();
       let time2 = a.getTime();
       const veri = {
-        dApp: "3MprJDkh5ytEdUqhn3iKYdFNg2CYoWBV51h",
+        dApp: "3PNUm9xZpDZFkfv7aN125xCEAqpddtouTMv",
         payment: [{
           assetId: "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p",
           amount: 5000000,
