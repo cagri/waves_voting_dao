@@ -167,7 +167,7 @@ class App extends Component {
         await this.state.signer.invoke(veri)
         .broadcast().then(data => {
 
-          const obj = {url: imageUrl, time: time2};
+          const obj = {url: imageUrl, time: time2+"_a"};
           const myJSON = JSON.stringify(obj);
           const data_nft = {
             name: 'WavesNFTMint',
