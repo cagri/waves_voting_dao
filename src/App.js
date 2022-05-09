@@ -205,7 +205,7 @@ class App extends Component {
   }
 
   dataParser = async() => {
-    await fetch('https://nodes-testnet.wavesnodes.com/addresses/data/3MprJDkh5ytEdUqhn3iKYdFNg2CYoWBV51h/?matches=%5Ba-zA-Z0-9_%5D%2B')
+    await fetch('https://nodes.wavesnodes.com/addresses/data/3PNUm9xZpDZFkfv7aN125xCEAqpddtouTMv/?matches=%5Ba-zA-Z0-9_%5D%2B')
     .then(response => response.json())
     .then(data => {
       console.log(data)
