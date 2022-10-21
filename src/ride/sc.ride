@@ -1,0 +1,123 @@
+{-# STDLIB_VERSION 5 #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+{-# CONTENT_TYPE DAPP #-}
+
+let voteAsset = base58'43W4FcqA1rEpSmUGHoGiXvpSLfhadws9LS5j3SJsKxxS'
+let newPurposePrice = 10000000000
+let voteDuration = 7 * 1440
+let newPurposeKey = "purpose"
+let purposeIdKey = "purposeId"
+
+func isPaymentOk(i: Invocation) = {
+  let acceptableAssetId = voteAsset
+  if (size(i.payments) == 0 ) then {
+    throw("payment not attached")
+  } else {
+    let p = i.payments[0]
+    match p.assetId {
+      case assetId: ByteVector => assetId == acceptableAssetId && p.amount == newPurposePrice
+      case _ =>  throw("wrong payment asset")
+    }
+  }
+}
+
+@Callable(i)
+func newPurpose(purpose: String) = {
+    let stringSize = size(purpose.toBytes())
+    let currentKey = toBase58String(i.caller.bytes)
+    let purposeId = this.getInteger(purposeIdKey).valueOrElse(0)
+    if stringSize > 200 || stringSize < 10 then {
+        throw("purpose text cannot be more than 200")
+    } else {
+        if !isPaymentOk(i) then {
+            throw("you have to pay "+newPurposePrice.toString())
+        } else {
+            let startHeight = height
+            let endHeight = height + voteDuration
+            let text = toBase64String(purpose.toBytes())
+            let id = purposeId + 1
+            [
+                StringEntry(newPurposeKey+"_"+id.toString()+"_text",text),
+                IntegerEntry(purposeIdKey,id),
+                StringEntry(newPurposeKey+"_"+id.toString()+"_duration",startHeight.toString()+"_"+endHeight.toString()),
+                StringEntry(newPurposeKey+"_"+id.toString()+"_owner",currentKey)
+            ]   
+        }
+    }
+}
+
+@Callable(i) 
+func vote4EnnoDAO(purposeId: Int,vote: Int) = {
+    let getDuration = this.getString(newPurposeKey+"_"+purposeId.toString()+"_duration").valueOrErrorMessage("purpose not found")
+    let duration = split(getDuration,"_")
+    let startHeight = parseInt(duration[0]).valueOrElse(0)
+    let endHeight = parseInt(duration[1]).valueOrElse(0)
+    let currentKey = toBase58String(i.caller.bytes)
+
+    if (height < startHeight || height > endHeight) then {
+        throw("voting period is over for purpose: "+purposeId.toString())
+    } else {
+        if (vote <= 0 || vote > 2 ) then {
+            throw("vote must be yes or no")
+        } else {
+            let amount = i.payments[0].amount
+            let lockTill = height + voteDuration
+            if (amount <= 0 || i.payments[0].assetId != voteAsset) then {
+                throw("invalid token attached")
+            }
+            else {
+                let totalVote = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_totalVote").valueOrElse(0)
+                let walletTotalVote = this.getInteger(newPurposeKey+"_"+purposeId.toString()+currentKey+"_walletTotalVote").valueOrElse(0)
+                let firstVoteCast = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_firstVoteBlock").valueOrElse(height)
+                if (vote == 1) then {
+                    let getYes = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_yes").valueOrElse(0)
+                    let getYesUser = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_yes").valueOrElse(0)
+                    let total = getYes + amount
+                    [
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_yes",getYesUser + amount),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_yes",total),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_totalVote",amount + totalVote),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_firstVoteBlock",firstVoteCast),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_walletTotalVote",amount + walletTotalVote)
+                    ]
+                } else if (vote == 2) then {
+                    let getNo = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_no").valueOrElse(0)
+                    let getNoUser = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_no").valueOrElse(0)
+                    let total = getNo + amount
+                    [
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_no",getNoUser + amount),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_no",total),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_totalVote",amount + totalVote),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_firstVoteBlock",firstVoteCast),
+                        IntegerEntry(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_walletTotalVote",amount + walletTotalVote)
+                    ]
+                } else {
+                    throw("nothing to do my friend")
+                }
+            }
+        }
+    }    
+}
+
+@Callable(i)
+func claimBack(purposeId: Int) = {
+    let currentKey = toBase58String(i.caller.bytes)
+    let getYesUser = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_yes").valueOrElse(0)
+    let getNoUser = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_no").valueOrElse(0)
+    let getLockBlock = this.getInteger(newPurposeKey+"_"+purposeId.toString()+"_"+currentKey+"_firstVoteBlock").valueOrErrorMessage("something went wrong. probably you did not vote for this!")
+
+    let lockBlock = getLockBlock + voteDuration
+
+    let total = getYesUser + getNoUser
+    if (height > lockBlock) then {
+        if (total > 0) then {
+            [
+                ScriptTransfer(i.caller,total,voteAsset)
+            ]
+        } else {
+            throw("nothing to claim!")
+        }
+    } else {
+        throw("still locked! will be available at: "+getLockBlock.toString())
+    }
+}
